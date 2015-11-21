@@ -15,16 +15,42 @@ public class SMTPMessage implements RFC5322 {
 	 * 
 	 * @param data
 	 */
-	public SMTPMessage(String data) {
+	public SMTPMessage(String data)
+	{
 
 		if(data.length()>998)
 		{
-			mHasError=true;
-			
+			mHasError=true;	
 		}
 		else
-			mHasError = parseCommand(data);
-
+		{
+			//mHasError = parseCommand(data);
+			mHasError = false;
+			/**
+			 * try to split the received string by ":" for finding commands likes "RCPT TO" and "MAIL FROM"
+			 * if fields size is 0, it means that there's no command like "RCPT TO", so it'll be split
+			 * by " ", which means that the received commands is a "HELO", "EHLO", "DATA", "RSET" or "QUIT"
+			 */
+			String [] fields = data.split(":");
+			//check if there is a "RCPT TO" or a "MAIL FROM" command
+			if(fields.length > 1)
+			{
+				/**
+				 * check if it is a correct command, if not, it will save "-1" in mCommandId
+				 * if it is correct, it will save the associated command code
+				 */
+				mCommandId = checkCommand(fields[0]);
+				mArguments = data.substring(fields[0].length(), data.length());
+			}
+			/**
+			 * if not, it will treat the message as a for command message (HELO, EHLO, DATA, RSET or QUIT)
+			 */
+			else
+			{
+				mCommandId = checkCommand(data.substring(0, 4));
+				mArguments = data.substring(4, data.length());
+			}
+		}	
 	}
 
 	/**
@@ -32,63 +58,25 @@ public class SMTPMessage implements RFC5322 {
 	 * @param data
 	 * @return true if there were errors
 	 */
-	protected boolean parseCommand(String data) {
+	/**
+	protected boolean parseCommand(String data)
+	{
 
-		if (data.indexOf(":") > 0) {
+		if (data.indexOf(":") > 0)
+		{
 			String[] commandParts = data.split(":");// Se busca los comandos con
 													// varias palabras MAIL
 													// FROM:
-			if (commandParts.length != 2) {
-				return true;
-			}
-
-			if (checkCommand(commandParts[0]) == RFC5321.C_NOCOMMAND) {
-				this.mErrorCode = RFC5321.E_500_SINTAXERROR;
-				return true;
-			}
-			commandParts[1] = commandParts[1].trim();
-			String arguments[] = commandParts[1].split(SP);
-
-			mArguments = arguments[0];
-
-			if (arguments.length > 1) {
-				mParameters = new String[arguments.length - 1];
-
-				for (int i = 1; i < arguments.length; i++) {
-					mParameters[i - 1] = arguments[i];
-				}
-			} else
-				mParameters = null;
-
-		} else {
-			// Es un comando sin ":"
-			String[] commandParts = data.split(SP);
-
-			if (checkCommand(commandParts[0]) == RFC5321.C_NOCOMMAND) {
-				this.mErrorCode = RFC5321.E_500_SINTAXERROR;
-				return true;
-			}
-			if (commandParts.length >= 2)
-				mArguments = commandParts[1];
-			else
-				mArguments = null;
-
-			if (commandParts.length > 2) {
-				mParameters = new String[commandParts.length - 2];
-
-				for (int i = 2; i < commandParts.length; i++) {
-					mParameters[i - 2] = commandParts[i];
-				}
-			} else
-				mParameters = null;
-
 		}
 
 		return false;
 	}
+	*/
 
-	public String toString() {
-		if (!mHasError) {
+	public String toString()
+	{
+		if (!mHasError)
+		{
 			String result = "";
 			result = this.mCommand;
 			if (this.mCommandId == RFC5321.C_MAIL
@@ -104,7 +92,8 @@ public class SMTPMessage implements RFC5322 {
 			//opcional
 			result=result+"id="+this.mCommandId;
 			return result;
-		} else
+		}
+		else
 			return "Error";
 	}
 
@@ -113,12 +102,14 @@ public class SMTPMessage implements RFC5322 {
 	 * @param data
 	 * @return The id of the SMTP command
 	 */
-	protected int checkCommand(String data) {
+	protected int checkCommand(String data)
+	{
 		int index = 0;
 
 		this.mCommandId = RFC5321.C_NOCOMMAND;
 
-		for (String c : RFC5321.SMTP_COMMANDS) {
+		for (String c : RFC5321.SMTP_COMMANDS)
+		{
 			if (data.compareToIgnoreCase(c) == 0)
 				this.mCommandId = index;
 
