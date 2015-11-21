@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
+
+import ujaen.git.ppt.mail.Mailbox;
 import ujaen.git.ppt.smtp.RFC5321;
 import ujaen.git.ppt.smtp.RFC5322;
 import ujaen.git.ppt.smtp.SMTPMessage;
@@ -28,6 +30,9 @@ public class Connection implements Runnable, RFC5322
 	private boolean mFin = false;
 	//new variables added from here
 	protected boolean isHELO = false;
+	protected boolean isMAIL = false;
+	protected boolean isRCPT = false;
+	protected String mFrom = "", mTo = "";
 	protected String mArguments = "";
 
 	public Connection(Socket s)
@@ -79,14 +84,35 @@ public class Connection implements Runnable, RFC5322
 							isHELO = true;
 							break;
 						case S_EHLO:
+							isHELO = true;
 							break;
 						case S_MAIL:
+							if(isHELO)
+							{
+								mFrom = mArguments;
+								isMAIL = true;
+							}
 							break;
 						case S_RCPT:
+							if(isHELO && isMAIL)
+							{
+								//check if the user exists
+								if(Mailbox.checkRecipient(mArguments))
+								{
+									isRCPT = true;
+								}
+								else
+								{
+									isRCPT = false;
+								}
+								System.out.println(isRCPT);
+							}
 							break;
 						case S_DATA:
 							break;
 						case S_RSET:
+							isMAIL = false;
+							isRCPT = false;
 							break;
 						case S_QUIT:
 							mFin = true;
@@ -99,16 +125,58 @@ public class Connection implements Runnable, RFC5322
 					// El servidor responde con lo recibido
 					switch (mEstado)
 					{
+						case S_NOCOMMAND:
+							outputData = RFC5321.getError(RFC5321.E_500_SINTAXERROR) + SP +
+							RFC5321.getErrorMsg(RFC5321.E_500_SINTAXERROR) + CRLF;
+							break;
 						//HELO response
 						case S_HELO:
 							outputData = RFC5321.getReply(RFC5321.R_250) + SP +
 							"Hello." + CRLF;
 							break;
+						//EHLO response
+						case S_EHLO:
+							outputData = RFC5321.getReply(RFC5321.R_250) + SP
+							+ "Hello." + CRLF;
+							break;
+						case S_MAIL:
+							if(!isHELO)
+							{
+								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP 
+								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
+							}
+							else
+							{
+								outputData = RFC5321.getReply(RFC5321.R_250) + SP
+								+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
+							}
+							break;
+						case S_RCPT:
+							if(!isHELO || !isMAIL)
+							{
+								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP 
+								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
+							}
+							else if(isHELO && isMAIL && !isRCPT)
+							{
+								outputData = RFC5321.getError(RFC5321.E_551_USERNOTLOCAL) + SP
+								+ RFC5321.getErrorMsg(RFC5321.E_551_USERNOTLOCAL) + CRLF;
+							}
+							else if(isHELO && isMAIL && isRCPT)
+							{
+								outputData = RFC5321.getReply(RFC5321.R_250) + SP
+								+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
+							}
+							break;
+						case S_RSET:
+							outputData = RFC5321.getReply(RFC5321.R_250) + SP
+							+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
+							break;
 						//QUIT response
 						case S_QUIT:
 							outputData = RFC5321.getReply(RFC5321.R_221) + SP + 
 							RFC5321.getReplyMsg(RFC5321.R_221) + SP + 
-							RFC5321.MSG_BYE + SP + CRLF;
+							RFC5321.MSG_BYE + CRLF;
 							break;
 					}
 					

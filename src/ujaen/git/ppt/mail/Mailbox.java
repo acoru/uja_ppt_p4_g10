@@ -196,11 +196,14 @@ public class Mailbox extends ArrayList<Mail> {
 	public static boolean checkRecipient(String rcpt) {
 
 		File file = new File(rcpt);
-		if (file.exists() && file.isDirectory()) {
+		if (file.exists() && file.isDirectory())
+		{
 			return true;
 		}
-		return false;
-
+		else
+		{
+			return false;
+		}
 	}
 
 	/**

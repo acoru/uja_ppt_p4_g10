@@ -40,7 +40,7 @@ public class SMTPMessage implements RFC5322 {
 				 * if it is correct, it will save the associated command code
 				 */
 				mCommandId = checkCommand(fields[0]);
-				mArguments = data.substring(fields[0].length(), data.length());
+				mArguments = data.substring(fields[0].length() + 1, data.length());
 			}
 			/**
 			 * if not, it will treat the message as a for command message (HELO, EHLO, DATA, RSET or QUIT)
@@ -111,10 +111,10 @@ public class SMTPMessage implements RFC5322 {
 		for (String c : RFC5321.SMTP_COMMANDS)
 		{
 			if (data.compareToIgnoreCase(c) == 0)
+			{
 				this.mCommandId = index;
-
+			}
 			index++;
-
 		}
 
 		if (mCommandId != RFC5321.C_NOCOMMAND)

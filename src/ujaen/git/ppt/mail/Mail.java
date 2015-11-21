@@ -45,7 +45,7 @@ public class Mail implements RFC5322{
 	public Mail(String from,String to,String host,String ip,String mail) {
 		mMail=mail;
 		mSize=mMail.length();
-		mMailfrom=to;
+		mMailfrom=from;
 		mRcptto=to;
 		mHost=host;
 		mIp=ip;
