@@ -38,6 +38,7 @@ public class Connection implements Runnable, RFC5322
 	private boolean mFin = false;
 	//new variables added from here
 	Mail mail = null;
+	Mailbox mBox = null;
 	protected boolean isHELO = false;
 	protected boolean isMAIL = false;
 	protected boolean isRCPT = false;
@@ -152,6 +153,7 @@ public class Connection implements Runnable, RFC5322
 								//check if the user exists
 								if(Mailbox.checkRecipient(mArguments))
 								{
+									mTo = mArguments;
 									isRCPT = true;
 								}
 								else
@@ -196,6 +198,12 @@ public class Connection implements Runnable, RFC5322
 								    //System.out.println(strDate);
 								    mail = new Mail();
 								    
+								    //setting up some parameters
+								    mail.setHost(hostname);
+								    mail.setMailfrom(mFrom);
+								    mail.setRcptto(mTo);
+								    System.out.println("Rcpt to: " + mTo);
+								    
 								    //adding headers to the mail
 								    mail.addHeader("Return-Path", mFrom);
 								    mail.addHeader("Received", heloArgument);
@@ -216,7 +224,9 @@ public class Connection implements Runnable, RFC5322
 									mailSend = true;
 									isMAIL = false;
 									isRCPT = false;
-									System.out.println("Mail: \r\n" + mail.getMail());
+									mBox = new Mailbox(mail);
+									//mBox.newMail(mail.getMail());
+									//System.out.println("Mail: \r\n" + mail.getMail());
 								}
 							}
 							break;
@@ -292,6 +302,7 @@ public class Connection implements Runnable, RFC5322
 								outputData = RFC5321.getReply(RFC5321.R_250) + SP
 								+ "Queued." + CRLF;
 								//changing the state for allowing user to continue with other actions
+								mailSend = false;
 								mEstado = S_NOCOMMAND;
 							}
 							break;

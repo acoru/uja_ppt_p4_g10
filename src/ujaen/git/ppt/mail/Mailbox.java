@@ -138,7 +138,8 @@ public class Mailbox extends ArrayList<Mail> {
 		if (file.exists() && file.isDirectory()) {
 			File[] files = file.listFiles();
 
-			if (files != null) {
+			if (files != null)
+			{
 				String[] filenames = new String[files.length];
 				String newfilename = String.valueOf(files.length);
 				int count = files.length + 1;
