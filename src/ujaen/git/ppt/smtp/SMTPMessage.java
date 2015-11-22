@@ -33,7 +33,11 @@ public class SMTPMessage implements RFC5322 {
 			 */
 			String [] fields = data.split(":");
 			//check if there is a "RCPT TO" or a "MAIL FROM" command
-			if(fields.length > 1)
+			if(data.length() < 4)
+			{
+				mCommandId = checkCommand(data);
+			}
+			else if(fields.length > 1)
 			{
 				/**
 				 * check if it is a correct command, if not, it will save "-1" in mCommandId
@@ -48,7 +52,10 @@ public class SMTPMessage implements RFC5322 {
 			else
 			{
 				mCommandId = checkCommand(data.substring(0, 4));
-				mArguments = data.substring(4, data.length());
+				if(data.length() > 4)
+				{
+					mArguments = data.substring(4, data.length());
+				}
 			}
 		}	
 	}

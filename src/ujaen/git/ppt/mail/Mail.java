@@ -157,8 +157,28 @@ public class Mail implements RFC5322{
 	}
 
 	
-	public void addHeader(String header, String value) {
+	public void addHeader(String header, String value)
+	{
 		//TODO Método que añada cabeceras al correo
-		
+		if(header.compareTo("Return-Path") == 0)
+		{
+			mMail = "Return-Path: " + value + CRLF;
+		}
+		if(header.compareTo("Received") == 0)
+		{
+			mMail += "Received: from " + value;
+		}
+		if(header.compareTo("host") == 0)
+		{
+			mMail += " (" + value + ")" + CRLF;
+		}
+		if(header.compareTo("date") == 0)
+		{
+			mMail += ";" + value + CRLF;
+		}
+		if(header.compareTo("Message-ID") == 0)
+		{
+			mMail += "Message-ID: " + value + CRLF;
+		}
 	}
 }
