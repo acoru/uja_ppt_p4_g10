@@ -86,6 +86,11 @@ public class Connection implements Runnable, RFC5322
 						case S_EHLO:
 							isHELO = true;
 							break;
+						/**
+						 * for specifying the MAIL FROM user.
+						 * It will only allow to the user to specify the MAIL FROM if a HELO message
+						 * has been already sent to the SMTP server
+						 */
 						case S_MAIL:
 							if(isHELO)
 							{
@@ -93,6 +98,13 @@ public class Connection implements Runnable, RFC5322
 								isMAIL = true;
 							}
 							break;
+						/**
+						 * for specifying the RCPT TO user (destination of the mail)
+						 * It will only allow to the user to specify the RCPT TO if a HELO message and
+						 * a MAIL FROM has been already sent to the server
+						 * Note that, if the user that has been specified as RCPT TO does not exists on the
+						 * local server it will send an error to the client
+						 */
 						case S_RCPT:
 							if(isHELO && isMAIL)
 							{
@@ -125,6 +137,7 @@ public class Connection implements Runnable, RFC5322
 					// El servidor responde con lo recibido
 					switch (mEstado)
 					{
+						//if message received is not a valid command, it will return an error to the client
 						case S_NOCOMMAND:
 							outputData = RFC5321.getError(RFC5321.E_500_SINTAXERROR) + SP +
 							RFC5321.getErrorMsg(RFC5321.E_500_SINTAXERROR) + CRLF;
@@ -139,6 +152,7 @@ public class Connection implements Runnable, RFC5322
 							outputData = RFC5321.getReply(RFC5321.R_250) + SP
 							+ "Hello." + CRLF;
 							break;
+						//MAIL FROM response
 						case S_MAIL:
 							if(!isHELO)
 							{
@@ -151,6 +165,7 @@ public class Connection implements Runnable, RFC5322
 								+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
 							}
 							break;
+						//RCPT TO response
 						case S_RCPT:
 							if(!isHELO || !isMAIL)
 							{
@@ -168,6 +183,7 @@ public class Connection implements Runnable, RFC5322
 								+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
 							}
 							break;
+						// RSET response
 						case S_RSET:
 							outputData = RFC5321.getReply(RFC5321.R_250) + SP
 							+ RFC5321.getReplyMsg(RFC5321.R_250) + CRLF;
