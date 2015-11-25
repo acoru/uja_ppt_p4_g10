@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
-
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,6 +38,7 @@ public class Connection implements Runnable, RFC5322
 	//new variables added from here
 	Mail mail = null;
 	Mailbox mBox = null;
+	ObtainIP sIP = null;	//socket IP
 	protected boolean isHELO = false;
 	protected boolean isMAIL = false;
 	protected boolean isRCPT = false;
@@ -50,6 +50,7 @@ public class Connection implements Runnable, RFC5322
 	protected String heloArgument = "";
 	protected String sMessID;
 	protected String strDate;
+	protected String IP = null;
 	protected int dID = 0;
 
 	public Connection(Socket s)
@@ -190,6 +191,10 @@ public class Connection implements Runnable, RFC5322
 								    addr = InetAddress.getLocalHost();
 								    hostname = addr.getHostName();
 								    
+								    //take the IP
+								    sIP = new ObtainIP(mSocket);
+								    IP = sIP.getIP();
+								    
 								    //create the MESSAGE-ID
 								    sMessID = "<" + dID + "@" + hostname + ">";
 								    
@@ -208,6 +213,7 @@ public class Connection implements Runnable, RFC5322
 								    mail.addHeader("Return-Path", mFrom);
 								    mail.addHeader("Received", heloArgument);
 								    mail.addHeader("host", hostname);
+								    mail.addHeader("IP", IP);
 								    mail.addHeader("date", strDate);
 								    mail.addHeader("Message-ID", sMessID);
 
@@ -304,6 +310,12 @@ public class Connection implements Runnable, RFC5322
 								//changing the state for allowing user to continue with other actions
 								mailSend = false;
 								mEstado = S_NOCOMMAND;
+							}
+							else if(!isMAIL || !isRCPT)
+							{
+								mEstado = S_NOCOMMAND;
+								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP
+								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
 							}
 							break;
 						// RSET response

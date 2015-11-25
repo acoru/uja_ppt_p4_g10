@@ -170,7 +170,13 @@ public class Mail implements RFC5322{
 		}
 		if(header.compareTo("host") == 0)
 		{
-			mMail += " (" + value + ")" + CRLF;
+			//mMail += " (" + value + ")" + CRLF;
+			mMail += " (" + value + " ";
+		}
+		if(header.compareTo("IP") == 0)
+		{
+			//compare IP
+			mMail += "[" + value + "])" + CRLF;
 		}
 		if(header.compareTo("date") == 0)
 		{

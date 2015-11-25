@@ -36,6 +36,7 @@ public class SMTPMessage implements RFC5322 {
 			if(data.length() < 4)
 			{
 				mCommandId = checkCommand(data);
+				mArguments = null;
 			}
 			else if(fields.length > 1)
 			{
@@ -52,9 +53,14 @@ public class SMTPMessage implements RFC5322 {
 			else
 			{
 				mCommandId = checkCommand(data.substring(0, 4));
-				if(data.length() > 4)
+				if(data.length() > 4 && (mCommandId == RFC5321.C_HELO || mCommandId == RFC5321.C_EHLO))
 				{
 					mArguments = data.substring(4, data.length());
+				}
+				else if(data.length() > 4)
+				{
+					mCommandId = RFC5321.C_NOCOMMAND;
+					mArguments = null;
 				}
 			}
 		}	
