@@ -122,12 +122,26 @@ public class Connection implements Runnable, RFC5322
 					switch (mEstado)
 					{
 						case S_HELO:
+							if(!isHELO)
+							{
+								heloArgument = mArguments;
+								//isHELO = true;
+							}
+							/**
 							heloArgument = mArguments;
 							isHELO = true;
+							*/
 							break;
 						case S_EHLO:
+							if(!isHELO)
+							{
+								heloArgument = mArguments;
+								//isHELO = true;
+							}
+							/**
 							heloArgument = mArguments;
 							isHELO = true;
+							*/
 							break;
 						/**
 						 * for specifying the MAIL FROM user.
@@ -135,7 +149,12 @@ public class Connection implements Runnable, RFC5322
 						 * has been already sent to the SMTP server
 						 */
 						case S_MAIL:
-							if(isHELO)
+							/**if(isHELO)
+							{
+								mFrom = mArguments;
+								isMAIL = true;
+							}*/
+							if(isHELO && !isRCPT)
 							{
 								mFrom = mArguments;
 								isMAIL = true;
@@ -258,17 +277,43 @@ public class Connection implements Runnable, RFC5322
 							break;
 						//HELO response
 						case S_HELO:
+							/**
 							outputData = RFC5321.getReply(RFC5321.R_250) + SP +
 							"Hello." + CRLF;
+							*/
+							if(!isHELO)
+							{
+								outputData = RFC5321.getReply(RFC5321.R_250) + SP +
+								"Hello." + CRLF;
+								isHELO = true;
+							}
+							else
+							{
+								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP 
+								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
+							}
 							break;
 						//EHLO response
 						case S_EHLO:
+							/**
 							outputData = RFC5321.getReply(RFC5321.R_250) + SP
 							+ "Hello." + CRLF;
+							*/
+							if(!isHELO)
+							{
+								outputData = RFC5321.getReply(RFC5321.R_250) + SP +
+								"Hello." + CRLF;
+								isHELO = true;
+							}
+							else
+							{
+								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP 
+								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
+							}
 							break;
 						//MAIL FROM response
 						case S_MAIL:
-							if(!isHELO)
+							if(!isHELO || isRCPT)
 							{
 								outputData = RFC5321.getError(RFC5321.E_503_BADSEQUENCE) + SP 
 								+ RFC5321.getErrorMsg(RFC5321.E_503_BADSEQUENCE) + CRLF;
