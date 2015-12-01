@@ -38,24 +38,50 @@ public class SMTPMessage implements RFC5322 {
 				mCommandId = checkCommand(data);
 				mArguments = null;
 			}
-			else if(fields.length > 1)
+			else if(fields.length == 2)
 			{
 				/**
 				 * check if it is a correct command, if not, it will save "-1" in mCommandId
 				 * if it is correct, it will save the associated command code
 				 */
-				mCommandId = checkCommand(fields[0]);
-				mArguments = data.substring(fields[0].length() + 1, data.length());
+				//to filter the 4 char commands like HELO, if user insert text like HELO:HI
+				if(fields[0].length() > 4)
+				{
+					mCommandId = checkCommand(fields[0]);
+					mArguments = data.substring(fields[0].length() + 1, data.length());
+				}
+				else
+				{
+					mCommandId = RFC5321.C_NOCOMMAND;
+					mArguments = null;
+				}
 			}
 			/**
-			 * if not, it will treat the message as a for command message (HELO, EHLO, DATA, RSET or QUIT)
+			 * if input string (message received) contains more than two ":" it is not a valid message
 			 */
+			else if(fields.length > 2)
+			{
+				mCommandId = checkCommand(fields[0]);
+				mArguments = null;
+			}
 			else
 			{
 				mCommandId = checkCommand(data.substring(0, 4));
 				if(data.length() > 4 && (mCommandId == RFC5321.C_HELO || mCommandId == RFC5321.C_EHLO))
 				{
-					mArguments = data.substring(4, data.length());
+					/**
+					 * if the 5º char is not a " " (space), it is not a valid command
+					 */
+					//if(data.substring(4,5).compareTo(" ") != 0)
+					if(data.substring(4,5).equalsIgnoreCase(" ") == false)
+					{
+						mCommandId = RFC5321.C_NOCOMMAND;
+						mArguments = null;
+					}
+					else
+					{
+						mArguments = data.substring(4, data.length());
+					}
 				}
 				else if(data.length() > 4)
 				{
